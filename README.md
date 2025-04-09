@@ -1,12 +1,12 @@
-# 🦠 COVID-19 Global Impact Analysis Dashboard (SQL Server + Tableau)
+# 🦠 COVID-19 Global Impact Analysis (SQL Server + Tableau)
 
-This project analyzes the global spread, severity, and response to the COVID-19 pandemic by merging and transforming two comprehensive datasets: **COVID deaths** and **vaccinations**. All data was cleaned and processed using **SQL Server**, and the final visualization dashboard was created in **Tableau Desktop**.
+This project investigates the global impact of the COVID-19 pandemic using a data pipeline built in **SQL Server**, cleaned and transformed from Excel datasets, and visualized using **Tableau Desktop**.
 
-The goal was to uncover:
-- Which regions were most impacted?
-- How did infection and death rates evolve over time?
-- What percentage of populations were infected?
-- How did vaccination affect country-level trends?
+The goal was to answer questions like:
+- Which countries and continents were most impacted by COVID-19?
+- What percentage of the population got infected?
+- What is the global death rate from COVID-19?
+- How did infections spread over time?
 
 ---
 
@@ -14,107 +14,111 @@ The goal was to uncover:
 
 | File | Description |
 |------|-------------|
-| `CovidDeaths.xlsx` | Global deaths and cases data (daily, by country) |
-| `CovidVaccinations.xlsx` | Vaccination and testing data (daily, by country) |
+| `CovidDeaths.xlsx` | Daily COVID-19 cases and deaths by country |
+| `CovidVaccinations.xlsx` | Vaccination, testing, and hospital metrics |
 | `Covid Data Analysis Tables SQL.sql` | SQL schema to create base tables in SQL Server |
-| `Covid Data Analysis SQL.sql` | SQL transformations and analysis queries |
-| `Covid Data Analysis Tables Excel.xlsx` | Excel version of tables for alternative loading |
-| `Covid Data Analysis Tableau.twbx` | Tableau workbook with final dashboard |
-| `Covid Data Analysis Dashboard.png` | Static image of the Tableau dashboard |
+| `Covid Data Analysis SQL.sql` | SQL queries for cleaning, transforming, and joining |
+| `Covid Data Analysis Tables Excel.xlsx` | Excel-based copies of SQL tables |
+| `Covid Data Analysis Tableau.twbx` | Tableau dashboard with visuals |
+| `Covid Data Analysis Dashboard.png` | Static preview of the dashboard |
 
 ---
 
-## 🔍 Dataset Summary
+## 🔍 Data Overview
 
-- **Source**: Our World in Data (https://ourworldindata.org/coronavirus)
-- **Rows**: 85,171 (each file)
-- **Date Range**: February 2020 – April 2021
-- **Coverage**: 200+ countries and continents
-
-### Common Columns:
-- `location`, `continent`, `date`, `population`
-- `total_cases`, `new_cases`, `total_deaths`, `new_deaths`
-- `total_vaccinations`, `people_vaccinated`, `positive_rate`, `tests_per_case`
+- **Source**: Our World in Data (OWID)
+- **Scope**: February 2020 – April 2021
+- **Countries**: 200+
+- **Metrics Tracked**:
+  - Cases, deaths, population
+  - Vaccinations, hospitalizations, tests
+  - Continent/country/date breakdowns
 
 ---
 
-## 🧹 Data Preparation & Cleaning (SQL Server)
+## 🧹 Data Preparation in SQL Server
 
-All transformations were performed in **SQL Server Management Studio (SSMS)** using T-SQL.
+All data cleaning and transformation were performed using **T-SQL** inside **SQL Server Management Studio (SSMS)**.
 
-### ✅ Cleaning & Processing Steps:
+### ✅ Steps Taken:
 
-1. **Importing Raw Data**
-   - Imported `.xlsx` files into SQL Server using `CovidDeaths` and `CovidVaccinations` tables.
+1. **Imported Excel Tables**
+   - Created SQL tables `CovidDeaths` and `CovidVaccinations`
+   - Ensured correct data types for `date`, `population`, numeric fields
 
-2. **Joining Tables**
-   - Merged on `location` and `date` to create a unified analysis table for Tableau
+2. **Handled Missing Values**
+   - Filtered out nulls in critical fields (e.g. `population`, `total_cases`)
+   - Filled gaps for smoother aggregation
 
-3. **Handling Missing Data**
-   - Replaced NULLs in critical fields like `population`, `total_cases`, `total_deaths`
-   - Filtered out records without population info (for per capita calculations)
+3. **Joined Deaths and Vaccinations**
+   - Joined tables on `location` and `date` to create a unified dataset
 
-4. **New Fields Created**
-   - `death_percentage` = `(total_deaths / total_cases) * 100`
-   - `percent_population_infected` = `(total_cases / population) * 100`
+4. **Created Derived Metrics**
+   - `DeathPercentage` = (`total_deaths` / `total_cases`) * 100
+   - `PercentPopulationInfected` = (`total_cases` / `population`) * 100
 
-5. **Date Aggregation**
-   - Extracted `month` and `year` for trend analysis
-   - Grouped by `month`, `continent`, and `location`
+5. **Grouped & Aggregated**
+   - Grouped by `continent`, `location`, and `month`
+   - Aggregated totals for continent-wise and country-wise analysis
 
-6. **Filtering Data**
-   - Excluded records where both deaths and cases were 0
-   - Focused on latest available data for country-level summaries
+6. **Filtered Incomplete Data**
+   - Excluded rows where deaths, cases, or population were 0 or NULL
+
+7. **Exported Data for Tableau**
+   - Final cleaned tables were linked live to Tableau
+   - Forecasted values for selected countries were added in Tableau
 
 ---
 
-## 📊 Dashboard Components (Tableau)
+## 📊 Tableau Dashboard Breakdown
 
-The dashboard is composed of 5 interactive and insightful visualizations:
+The interactive Tableau dashboard includes 5 major visual components:
 
-### 1. 🧮 Total Death Percentage Table
-- Displays:
-  - Total Cases: **150M+**
-  - Total Deaths: **3.18M**
-  - Global Death %: **~2.11%**
+### 1. **Total Death Percentage Table**
+- Aggregated Global Stats:
+  - **Total Cases**: 150M+
+  - **Total Deaths**: 3.18M+
+  - **Global Death %**: ~2.11%
 
-### 2. 🌍 Deaths per Continent
-- Bar chart summarizing deaths across continents:
-  - **Europe** had the highest total deaths: **1M+**
-  - Followed by **North America** and **South America**
+### 2. **Total Deaths by Continent**
+- Vertical bar chart
+- Highlights that **Europe (1M+)** and **North America (850k+)** saw the most deaths
 
-### 3. 🗺️ Infected Population by Country
-- Choropleth map shows **% of population infected**
-- Countries like **Andorra**, **USA**, and **UK** were among the highest
+### 3. **Percentage of Population Infected by Country**
+- Choropleth world map using gradient scale
+- Countries like **Andorra**, **USA**, **UK** had high infection % (up to 17%)
 
-### 4. 📈 Infection Trend Over Time
-- Line graph tracking infection % across:
-  - **Andorra**, **India**, **Mexico**, **United Kingdom**, **United States**
-- Both **actual** and **forecasted** trend lines included
+### 4. **Monthly Infection Trend (Line Chart)**
+- Compares **actual** and **forecasted** infection percentages
+- Includes:
+  - Andorra (actual & estimated)
+  - India (actual & estimated)
+  - Mexico, UK, US (actual & estimated)
+- Forecasts were built using Tableau’s built-in forecasting model
 
-### 5. 🧭 Interactivity & Forecast
-- Filters by country, forecast indicator, and time
-- Forecasts built using Tableau’s exponential smoothing model
+### 5. **Interactive Elements**
+- Filters by country and date
+- Tooltip interactivity on map and line charts
 
 ---
 
 ## 💡 Key Insights
 
-- **Andorra** had the highest infection rate (~19.61%)
-- Global infection rate was low, but uneven across continents
-- Death rates were highest in Europe and North America
-- Infections steadily rose from mid-2020 and spiked through 2021
-- Forecasts show that smaller nations may reach higher saturation faster
+- **Global infection rate** was ~2.1% of confirmed cases resulting in death
+- **Andorra** had the highest % of population infected (~19.61%)
+- **Europe** recorded the most total deaths (1M+), followed by **North America**
+- Infection spread was not uniform — smaller countries often showed high % infected
+- Vaccination data, while available, was used to track timeline but not directly plotted in the dashboard
 
 ---
 
 ## 🛠 Tools Used
 
-- **SQL Server Management Studio (SSMS)** – Data wrangling and joining
-- **T-SQL** – Custom calculations and aggregations
-- **Microsoft Excel** – Initial data source
-- **Tableau Desktop** – Dashboard design and forecasting
-- **OpenStreetMap via Mapbox** – For geographical visuals
+- **SQL Server Management Studio (SSMS)** – data cleaning and transformation
+- **T-SQL** – all joins, filters, aggregations, and metrics
+- **Microsoft Excel** – source format for original datasets
+- **Tableau Desktop** – for all data visualizations and forecasting
+- **Mapbox (via Tableau)** – for geographic visualizations
 
 ---
 
@@ -126,4 +130,4 @@ The dashboard is composed of 5 interactive and insightful visualizations:
 
 ## 📷 Dashboard Preview
 
-![Covid Dashboard](Covid%20Data%20Analysis%20Dashboard.png)
+![Dashboard](Covid%20Data%20Analysis%20Dashboard.png)
